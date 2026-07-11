@@ -1029,3 +1029,31 @@ your prompt
 ```
 
 **One line:** `predict()` is the manual chat flow — it wraps your question with a system instruction and roles, formats it with the model's chat template, tokenizes it onto the GPU, generates a reply (`max_new_tokens=4096` caps length, `temperature=0.2` keeps it focused), trims off the original prompt, and decodes the result back into clean text.
+
+## Q22: What is safetensors? Are these the weights?
+
+### Is safetensors the weights? → Not exactly
+**Safetensors is the *file format* used to store the weights — not the weights themselves.**
+- **Weights** = the actual learned numbers (the model's brain)
+- **Safetensors** = the *container/file type* those numbers are saved in
+
+> 📦 Analogy: Weights are the **stuff**; safetensors is the **box**. Like a photo (content) vs `.jpg` (format). So `model.safetensors` is a file that **contains the weights**, stored in the safetensors format.
+
+### Why it's called "safe"
+It replaced an older format (`.bin` / PyTorch pickle) that had a **security risk**: loading a `.bin` could secretly **run malicious code** hidden inside. Safetensors stores *only* the numbers, no executable code — so loading a model from the internet can't harm your machine.
+
+| | Old `.bin` (pickle) | `.safetensors` |
+|---|---|---|
+| Stores | Weights (+ can hide code) | **Just the weights** |
+| Safe to load? | ⚠️ Risky (can run code) | ✅ Safe |
+| Speed | Slower | **Faster** to load |
+
+### Two bonuses beyond safety
+- ⚡ **Faster loading** — models open quicker
+- 💾 **Efficient** — load huge models without hogging memory
+
+### Where you've seen it
+- Earlier: `model.safetensors (268M)` downloaded — that's the weights file
+- It's also a Hugging Face open-source library
+
+**One line:** Safetensors is a *file format* for storing model weights safely — the "box," not the weights themselves. It replaced `.bin` (which could hide malicious code); safetensors stores only the numbers (no code), so it's safe to load *and* faster.
