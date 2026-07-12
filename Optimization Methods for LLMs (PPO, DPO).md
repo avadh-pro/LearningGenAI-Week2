@@ -100,3 +100,73 @@ No scoring, no judge — it learns from **which one humans preferred.**
 DPO gets similar alignment results but is **simpler, cheaper, and more stable** — it skips building a good reward model. PPO is powerful and battle-tested (it trained early ChatGPT), but DPO is often the easier modern choice.
 
 **One line:** PPO teaches an AI using a separate *reward model* that scores answers, nudging it toward higher scores in small, leashed steps (stable but complex); DPO skips the reward model and learns directly from *pairs* labeled "better vs worse" (simpler, often more stable). Both align the AI with human preferences — DPO is the lighter, modern approach.
+
+## Q2: So PPO and DPO are fine-tuning methods, correct?
+
+**Yes — correct!** But they're a *specific kind* of fine-tuning.
+
+### They're the "alignment" / preference type
+
+| Fine-tuning type | What it teaches | Example methods |
+|---|---|---|
+| **Supervised Fine-Tuning (SFT)** | "Here's the *right answer* — copy it" | Your ticket-tagger & LoRA notebooks (`SFTTrainer`) |
+| **Preference/Alignment tuning** | "Here's which answer humans *prefer* — lean that way" | **PPO, DPO** |
+
+- **SFT** = learn from **correct examples** (question → ideal answer)
+- **PPO/DPO** = learn from **preferences** (this answer is *better than* that one)
+
+### Where they sit in the training pipeline
+```
+1. Pretraining   → learn language from tons of text (base model)
+2. SFT           → teach it to follow instructions (your notebooks did this)
+3. PPO / DPO     → align it with human preferences (helpful, safe, polite)
+```
+PPO/DPO are usually the **last polishing step**, done *after* SFT.
+
+### To be precise
+- ✅ Yes, PPO and DPO **are fine-tuning methods**
+- 🎯 Specifically **preference-alignment** tuning (learn from *comparisons*, not just correct answers)
+- 🔗 Different from the **SFT** in your Kaggle notebooks (which learned from correct answers directly)
+
+### How they relate to what you've learned
+- **LoRA/QLoRA** = *how efficiently* you fine-tune (the mechanism) — usable *with* any of these
+- **SFT vs PPO/DPO** = *what kind* of fine-tuning (copy answers vs. match preferences)
+- You can combine them: e.g. **DPO + LoRA** = align with preferences, efficiently.
+
+**One line:** Yes — PPO and DPO are fine-tuning methods, specifically the *preference-alignment* kind: they teach a model from human *preferences* (which answer is better) rather than from correct answers like SFT does. They're typically the final polishing stage, done after SFT.
+
+## Q3: Explain PPO and DPO in the simplest terms (once more)
+
+Imagine **training a dog to greet guests nicely.** 🐕
+
+### PPO — train with a "treat score" 🦴
+- The dog does something → a **judge gives it a score** (good sit = 8 treats, jumping on the guest = 2 treats)
+- You reward more of the high-score behavior
+- **But gently** — small steps, so the dog doesn't get confused
+- ⚠️ Catch: you need a **judge** who decides the treat amounts — extra setup
+
+**PPO = teach using a scoring judge, nudging little by little.**
+
+### DPO — train with "this is better than that" 👍👎
+- Instead of scores, show the dog **two greetings side by side**: *"This one (calm sit) is better than that one (jumping)."*
+- The dog learns: **do more of the preferred one, less of the other**
+- ✅ No judge, no treat-counting — just "A is better than B"
+
+**DPO = teach by comparing two options and picking the better one.**
+
+### The core difference in one picture
+```
+PPO:  answer → judge gives score → nudge toward high scores   (needs a judge)
+DPO:  "answer A is better than answer B" → lean toward A       (no judge)
+```
+
+### Simple takeaway
+| | PPO | DPO |
+|---|---|---|
+| How it learns | From a **score** (a judge rates each answer) | From a **comparison** (A is better than B) |
+| Needs a separate judge? | ✅ Yes | ❌ No |
+| Simpler? | More complex | ✅ Simpler |
+
+Both do the same job: **make the AI give answers people prefer.** DPO is just the easier, newer way (no judge needed).
+
+**One line:** PPO trains the AI with a scoring "judge" that rates each answer, nudging it toward higher scores in small steps (powerful but needs the judge); DPO skips the judge — it learns from "answer A is better than answer B" comparisons (simpler). Both teach the AI to give answers people prefer.
