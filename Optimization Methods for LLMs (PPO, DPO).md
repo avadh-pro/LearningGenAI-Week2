@@ -284,3 +284,43 @@ Llama-3.1-8B       →   Llama-3.1-8B-Instruct        →   DeepSeek-R1-Distill-
 | **Reasoning** | **DeepSeek-R1**, OpenAI **o1/o3**, **QwQ** | Hard math, logic, coding |
 
 **One line:** Correct — Base → Instruction-tuned → Reasoning, each built on the last (e.g. DeepSeek-V3-Base → DeepSeek-V3 → DeepSeek-R1). Base rambles, instruct answers directly ("408"), reasoning shows the working then answers.
+
+## Q7: What is RLHF? (simply, with a real example)
+
+**RLHF = Reinforcement Learning from Human Feedback** — teach a model to give answers *humans prefer*, by building a "taste judge" from human ratings, then letting it coach the model.
+
+### The 3-step cycle
+```
+1. Start with an SFT model     → can answer, but not always the "best" way
+2. Build a REWARD MODEL        → a "judge" trained on human preferences
+3. Train with RL (PPO)         → judge scores answers → model adjusts to score higher
+```
+
+**Step 2 — the reward model (judge):** humans mark which answers they prefer → train a model on those ratings → it can now **score any answer** the way humans would.
+
+**Step 3 — the RL loop:**
+- Model generates an answer → reward model **scores it**
+- Preferred (high score) → nudge weights **up** ⬆️ (do more of that)
+- Not preferred (low score) → nudge weights **down** ⬇️
+- Repeat → the model drifts toward "what humans like"
+
+*(Your intuition — "increase for preferred, decrease for non-preferred" — is exactly right.)*
+
+### Real example 🍕 (support bot)
+1. **SFT bot** → *"Sorry, checking now."* (flat)
+2. **Reward model:** managers rate pairs → *"I'm so sorry! Let me sort this out right away 🙏"* = HIGH 👍; *"Sorry, checking now."* = LOW 👎 → train a judge on this
+3. **RL loop:** flat reply scores 4/10 → down ⬇️; warm reply scores 9/10 → up ⬆️ → bot naturally produces the warm style
+
+### The famous real example: **ChatGPT**
+Exactly how ChatGPT was made helpful: SFT → humans rank answers → reward model → RLHF (PPO) toward the top-ranked ones.
+
+### How RLHF relates to PPO/DPO/GRPO
+- **RLHF** = the overall *approach* (human feedback → reward model → RL)
+- **PPO** = the classic *algorithm* for the RL step
+- **DPO** = shortcut that skips the reward model (learns straight from preference pairs)
+- **GRPO** = cheaper RL variant (group-average scoring)
+
+### Intern analogy 🧑‍💼
+SFT = intern read the manual; reward model = a manager who instantly judges good vs bad; RLHF = intern does tasks, manager gives 👍/👎, intern adjusts to earn more 👍.
+
+**One line:** RLHF teaches a model to give answers *humans prefer* — humans rate responses → train a "reward model" (judge) → RL (PPO) nudges the model's weights up for high-scoring answers and down for low-scoring ones. It's how ChatGPT was made helpful; PPO/DPO/GRPO are the methods that carry out the RL step.
