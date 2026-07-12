@@ -281,3 +281,42 @@ Instruction-tuning doesn't *add the fact* — it teaches the model to **reliably
 A brilliant but distracted student: **Base** knows the answer but might mumble or change the subject; **Instruct** has the same knowledge but is trained to **actually answer clearly when asked.**
 
 **One line:** The base model *does* know Delhi (from pretraining) — it just may not *reliably answer* a question (might ramble or continue the pattern). The instruct model reliably answers "New Delhi" because SFT taught it to respond. The difference is behavior, not knowledge.
+
+## Q7: SFT vs Alignment tuning — the 2 stages of post-training, simply?
+
+### The big picture
+After a lab releases a **pretrained model**, you polish it in **two stages**:
+```
+Pretrained model
+   → Stage 1: SFT          → learns WHAT to say (from examples)
+   → Stage 2: Alignment    → learns WHAT to PREFER (from comparisons)
+```
+
+### Stage 1 — SFT (Supervised Fine-Tuning): "learn by imitation"
+- Give **(input → correct output)** examples; the model imitates them
+- Classic supervised learning: input + label (question + ideal answer)
+- Example: teach it APIs → now it answers *"a 500 error means a server-side issue"* ✅
+- ✅ Easy, light on hardware. **Goal:** task adaptation + response format/style
+- **Limitation:** it only imitates the *one* example answer — it has **no idea if a *better* answer existed.** It never saw a comparison, so it can't tell **preferred vs. not-preferred.**
+
+> SFT teaches **what to say**, not **what's *better* to say.**
+
+### The problem this leaves
+Most questions have **many valid answers** (concise vs. detailed). SFT can't learn *which one people prefer* — it never saw them compared. (Why a model can feel "not quite right" even after SFT.)
+
+### Stage 2 — Alignment tuning: "learn what to prefer"
+- Give **comparisons** — *"Response A is better than Response B"* — and it learns to **prefer** the better kind
+- **Goal:** match **human preferences** — helpfulness, style, reasoning, **safety**
+- Done via **PPO / DPO / GRPO**
+- **Safety example:** give one answer that leaks personal info (PII) and one that doesn't, mark the no-PII one preferred → the model learns to **avoid** leaking PII
+
+### The core contrast
+| | **SFT** | **Alignment tuning** |
+|---|---|---|
+| Learns from | **One correct answer** (demonstrations) | **Comparisons** (A better than B) |
+| Teaches | **What to say** | **What to *prefer*** |
+| Data | (input → ideal output) pairs | ranked/preferred responses |
+| Analogy | *"Copy this answer"* | *"This is better than that"* |
+| Methods | `SFTTrainer` | PPO, DPO, GRPO |
+
+**One line:** Two post-training stages — SFT first (imitate ideal examples → learn *what to say* + your style; easy, but only copies one answer and can't tell good from better), then alignment tuning (learn from *comparisons* → *what to prefer*, matching human preferences like helpfulness, reasoning, and safety), done via PPO/DPO/GRPO.
