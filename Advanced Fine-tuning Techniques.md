@@ -153,3 +153,131 @@ You didn't "add facts" — you **reshaped *which outputs are more/less likely*.*
 | Precise | "Fine-tuning shifts the next-token probabilities toward the patterns in our data — making our desired outputs more likely" |
 
 **One line:** "Training on our data" is the *how*, but what's really happening is that fine-tuning **reshapes the model's next-token probability distribution** — making your desired outputs more likely and others less likely. That's why it changes *behavior and style*, not just adds facts, and it's exactly what a LoRA adapter does (shifts the output distribution without editing the frozen base).
+
+## Q3: Are there four types of fine-tuning — Continued Pretraining, SFT, PEFT, and Preference/Alignment tuning?
+
+Almost — but **PEFT doesn't belong in the same list.** The other three are *types of fine-tuning* (grouped by **goal**); PEFT is a *mechanism* (grouped by **how**). Different axis.
+
+### These 3 are fine-tuning *types* (by goal / what you teach)
+| Type | Goal |
+|---|---|
+| **Continued Pretraining** | Keep learning general/domain knowledge (more raw text, e.g. medical/legal) |
+| **SFT** (Supervised Fine-Tuning) | Teach it to follow instructions (question → answer) |
+| **Preference/Alignment tuning** | Match human preferences (PPO / DPO / GRPO) |
+
+### PEFT is a *mechanism* (how you train — efficiently)
+| Mechanism | Meaning |
+|---|---|
+| **Full fine-tuning** | Update all weights |
+| **PEFT** (LoRA/QLoRA) | Update only tiny adapters |
+
+**Why PEFT is separate:** you can do **any** of the 3 types *using* PEFT — e.g. "SFT **with** LoRA," or "alignment **with** LoRA." PEFT isn't a *type*; it's a *way to do* the fine-tuning cheaply. It cuts across all of them.
+
+### The clean picture
+```
+TYPES (what you teach):   Continued Pretraining → SFT → Preference/Alignment
+MECHANISM (how):          each can be done via →  Full fine-tuning  OR  PEFT (LoRA/QLoRA)
+```
+
+### Example to lock it in
+- **Ticket-tagger** = **SFT** (type) done with **full fine-tuning** (mechanism)
+- **LoRA LLaMA bot** = **SFT** (type) done with **PEFT/QLoRA** (mechanism)
+
+👉 Same *type* (SFT), different *mechanism* — showing PEFT is a separate axis.
+
+**One line:** Not quite — there are **3 fine-tuning *types*** (by goal): Continued Pretraining, SFT, and Preference/Alignment tuning. **PEFT is not a 4th type** — it's a *mechanism* (efficient "how," via LoRA/QLoRA) applied *within* any of those types. Types = *what* you teach; PEFT = *how* you do it.
+
+## Q4: What does "teach it to follow instructions" (in SFT) mean?
+
+**SFT shows the model thousands of examples of "when asked X, respond with Y" — so it learns to *do what you ask* instead of just continuing text.**
+
+### Why it's needed (before/after)
+A **base model** only predicts the next word. Without SFT, you ask:
+```
+"Write a poem about the sea."
+```
+→ it might just continue the *pattern*:
+```
+"Write a poem about the mountains. Write a poem about the sky."  ❌
+```
+It doesn't realize you want it to *obey* — it just extends text.
+
+**After SFT**, same input →
+```
+"The waves roll in with a gentle sigh, beneath the vast and open sky..."  ✅
+```
+Now it **actually does the task.**
+
+### How SFT teaches this
+Feed it a dataset of **(instruction → correct response) pairs**:
+```
+"Translate 'hello' to French"   →  "Bonjour"
+"Summarize this paragraph: ..."  →  "..."
+"What's our refund policy?"      →  "..."
+```
+After enough examples, it **generalizes**: *"when I get an instruction, carry it out."*
+
+### You've literally done this ✅
+- Ticket-tagger: instruction (ticket) → response (department)
+- LoRA bot: instruction (customer question) → response (support answer)
+
+Both fed **(instruction → answer) pairs** = SFT.
+
+### Tie to a term you know
+"Follow instructions" = the same idea as **instruction-tuned**. SFT on instruction→answer pairs is *how* a model becomes instruction-tuned.
+
+**One line:** It means showing the model many *(instruction → correct answer)* examples so it learns to *carry out requests* instead of just continuing text — turning a base model that rambles into one that actually answers what you ask (exactly what your two Kaggle notebooks did).
+
+## Q5: So SFT is giving the Question and Answer when fine-tuning, correct?
+
+**Yes — exactly right!** ✅
+
+**SFT = fine-tuning by giving the model (Question → Answer) pairs**, so it learns to produce the answer when it sees the question.
+```
+Question (instruction)          →  Answer (correct response)
+"What's your refund policy?"     →  "You can return items within 30 days..."
+```
+Show it many of these → it learns the pattern.
+
+**Small note on wording:** they're often called **(instruction → response)** pairs — same thing as question → answer, just the general term (the "question" could also be a command like "Summarize this" or "Translate that").
+
+**One line:** Correct — SFT fine-tunes the model on (Question → Answer) / (instruction → response) pairs, teaching it to give the right answer for a given input. That's exactly what both your Kaggle notebooks did.
+
+## Q6: So if I ask a base model "What is the capital of India," it won't give Delhi, but an instruct model will?
+
+**Small correction:** it's not that the base model *doesn't know* Delhi. It **does know** — it just might not *behave* like a helpful assistant.
+
+### The base model HAS the knowledge ✅
+It learned "India → New Delhi" during pretraining. The fact is in there. The difference isn't knowledge — it's **behavior/format.**
+
+### It depends on how you phrase it
+**As text to continue:**
+```
+"The capital of India is"   →  base completes: "New Delhi." ✅
+```
+**As a conversational question:**
+```
+"What is the capital of India?"
+```
+→ base is **unreliable** — might answer "New Delhi" ✅, or continue the pattern *"What is the capital of France?..."* ❌, or ramble.
+
+It's not *wrong about the fact* — it just doesn't reliably know it's supposed to **answer you.**
+
+### The instruct model → reliable ✅
+```
+"What is the capital of India?"  →  "The capital of India is New Delhi."  ✅
+```
+Every time, because SFT taught it to *respond to questions.*
+
+### Corrected picture
+| | Knows Delhi? | Answers reliably? |
+|---|---|---|
+| **Base** | ✅ **Yes** | ⚠️ **Not reliably** (may ramble/continue) |
+| **Instruct** | ✅ Yes | ✅ **Yes** (trained to respond) |
+
+Instruction-tuning doesn't *add the fact* — it teaches the model to **reliably respond** with what it already knows.
+
+### Analogy 🎓
+A brilliant but distracted student: **Base** knows the answer but might mumble or change the subject; **Instruct** has the same knowledge but is trained to **actually answer clearly when asked.**
+
+**One line:** The base model *does* know Delhi (from pretraining) — it just may not *reliably answer* a question (might ramble or continue the pattern). The instruct model reliably answers "New Delhi" because SFT taught it to respond. The difference is behavior, not knowledge.

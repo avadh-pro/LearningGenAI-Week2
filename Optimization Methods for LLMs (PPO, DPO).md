@@ -247,3 +247,40 @@ Base (predicts text)
 ```
 
 **One line:** A reasoning model is trained to *think step-by-step before answering* (great for math/logic/code), built *on top of* an instruction-tuned model — instruct = "answer me," reasoning = "think, then answer." Main model types: base, instruction-tuned, reasoning, multimodal, embedding, and domain-fine-tuned — often overlapping.
+
+## Q6: So it's Base → Instruction-tuned → Reasoning — with real examples to compare?
+
+**Yes — correct!** Each layer is built on the previous. Here are real examples using the **same families** for a clean comparison.
+
+### Same family — DeepSeek (cleanest)
+```
+DeepSeek-V3-Base   →   DeepSeek-V3 (Instruct/Chat)   →   DeepSeek-R1 (Reasoning)
+```
+### Same family — Qwen
+```
+Qwen2.5-7B         →   Qwen2.5-7B-Instruct          →   QwQ-32B (Reasoning)
+```
+### Same family — LLaMA
+```
+Llama-3.1-8B       →   Llama-3.1-8B-Instruct        →   DeepSeek-R1-Distill-Llama (reasoning on Llama)
+```
+### OpenAI (base not public)
+```
+(GPT base, private) →   GPT-4o (Chat)               →   o1 / o3 (Reasoning)
+```
+
+### How each *behaves* — ask "What's 17 × 24?"
+| Model type | Response |
+|---|---|
+| **Base** | Rambles/continues: *"What's 18 × 25? What's..."* ❌ |
+| **Instruction-tuned** | Direct: *"408"* ✅ (fast, no shown work) |
+| **Reasoning** | *"17 × 20 = 340, 17 × 4 = 68, 340 + 68 = 408."* 🧠 (thinks, then answers) |
+
+### Quick mapping to remember
+| Layer | Real example | Use for |
+|---|---|---|
+| **Base** | Llama-3.1-8B, DeepSeek-V3-Base | Starting point for fine-tuning |
+| **Instruction-tuned** | Llama-3.1-8B-**Instruct**, GPT-4o | Chat, Q&A, everyday tasks |
+| **Reasoning** | **DeepSeek-R1**, OpenAI **o1/o3**, **QwQ** | Hard math, logic, coding |
+
+**One line:** Correct — Base → Instruction-tuned → Reasoning, each built on the last (e.g. DeepSeek-V3-Base → DeepSeek-V3 → DeepSeek-R1). Base rambles, instruct answers directly ("408"), reasoning shows the working then answers.
