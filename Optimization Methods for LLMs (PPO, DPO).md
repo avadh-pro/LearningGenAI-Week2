@@ -170,3 +170,80 @@ DPO:  "answer A is better than answer B" → lean toward A       (no judge)
 Both do the same job: **make the AI give answers people prefer.** DPO is just the easier, newer way (no judge needed).
 
 **One line:** PPO trains the AI with a scoring "judge" that rates each answer, nudging it toward higher scores in small steps (powerful but needs the judge); DPO skips the judge — it learns from "answer A is better than answer B" comparisons (simpler). Both teach the AI to give answers people prefer.
+
+## Q4: What is GRPO (for fine-tuning local LLMs)?
+
+**GRPO = Group Relative Policy Optimization** — a newer alignment method; think of it as a **smarter, cheaper cousin of PPO**. It became famous because **DeepSeek** used it to train their reasoning models (DeepSeek-R1).
+
+### The problem it solves
+PPO needs a **separate "judge" (reward model)** to score answers — expensive and complex. GRPO **removes that heavy judge** with a clever trick.
+
+### How GRPO works (simple version)
+1. For one question, the model generates a **group of answers** (say 8 attempts) 🎯
+2. Each answer gets a simple score (often a basic rule/reward, not a big trained judge)
+3. It **compares each answer to the *group average*** — better-than-group → encouraged; worse-than-group → discouraged
+4. Small, stable steps (keeps PPO's "leash" idea)
+
+> 🏃 Analogy: instead of a strict examiner grading each student against a fixed rubric, you say: *"You did better than the class average → do more of that; worse → less."* The **group itself is the benchmark.**
+
+### Why "Group Relative"
+- **Group** → judges a *batch* of answers together
+- **Relative** → scores each **relative to the group's average**, not an absolute judge
+
+### PPO vs DPO vs GRPO
+| | Needs a reward-model judge? | How it learns |
+|---|---|---|
+| **PPO** | ✅ Yes (separate judge) | Nudge toward judge's scores |
+| **DPO** | ❌ No | From "A better than B" pairs |
+| **GRPO** | ⚠️ Lighter — often just a rule/simple reward | Compare each answer to the **group average** |
+
+### Why it's popular for local/smaller LLMs
+- 💰 **Cheaper** — no big separate reward model → fits modest hardware
+- 🧠 **Great for reasoning/math/code** — where you can auto-check correctness (e.g. "is the math answer right?") as the simple reward
+- 🔗 Pairs well with **LoRA/QLoRA** → efficient alignment of a local model
+
+**One line:** GRPO (Group Relative Policy Optimization) is a PPO-style alignment method that ditches PPO's expensive separate "judge": for each question it generates a *group* of answers and rewards the ones that beat the *group's average*. It's cheaper, simpler, great for reasoning tasks, and popular for fine-tuning local LLMs (it's what DeepSeek used).
+
+## Q5: What is a reasoning model? Is it different from instruction-tuned? And what other types of models are there?
+
+### What is a "reasoning model"?
+**Trained to *think step-by-step before answering*** — it works through the problem internally (like scratch work) instead of answering instantly.
+- Hard math problem → it **reasons through it** step by step, *then* answers
+- Examples: **DeepSeek-R1**, OpenAI **o1/o3**, Gemini "thinking" models
+- Often trained with RL like **GRPO** — reward the model when its reasoning leads to correct answers
+
+> 🧠 Analogy: a student who **works it out on scratch paper** before writing the final answer.
+
+### Reasoning vs Instruction-tuned — different?
+**Yes — reasoning is a *further step* on top.**
+
+| | **Instruction-tuned** | **Reasoning model** |
+|---|---|---|
+| Trained to | **Follow instructions / answer** | **Think step-by-step, then answer** |
+| Speed | Fast — answers directly | Slower — "thinks" first (more compute) |
+| Best for | Chat, Q&A, everyday tasks | Hard math, logic, coding, multi-step |
+| Example | Llama-3.2-**Instruct** | DeepSeek-**R1**, o1 |
+
+A reasoning model is *usually also* instruction-tuned — reasoning is an **extra stage added on top** (not either/or).
+
+### The main types of models (by purpose/training)
+| Type | What it is | Example |
+|---|---|---|
+| **Base / Pretrained** | Raw, just predicts next word | Llama-3.2 (base) |
+| **Instruction-tuned** | Follows instructions / chats | Llama-3.2-Instruct |
+| **Reasoning** | Thinks step-by-step before answering | DeepSeek-R1, o1 |
+| **Multimodal** | Handles text + images/audio/video | GPT-4o, Gemini |
+| **Embedding** | Turns text into vectors (search/similarity) | text-embedding models |
+| **Domain/Fine-tuned** | Specialized on specific data | your ticket-tagger, support bot |
+
+*(These overlap — e.g. GPT-4o is multimodal AND instruction-tuned; DeepSeek-R1 is reasoning AND instruction-tuned.)*
+
+### How they build on each other
+```
+Base (predicts text)
+  → + instruction tuning → Instruct model (follows/answers)
+      → + reasoning training (e.g. GRPO) → Reasoning model (thinks first)
+  → (+ image/audio training) → Multimodal
+```
+
+**One line:** A reasoning model is trained to *think step-by-step before answering* (great for math/logic/code), built *on top of* an instruction-tuned model — instruct = "answer me," reasoning = "think, then answer." Main model types: base, instruction-tuned, reasoning, multimodal, embedding, and domain-fine-tuned — often overlapping.

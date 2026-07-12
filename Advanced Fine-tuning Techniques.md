@@ -118,3 +118,38 @@ Full Fine-tuning   → update ALL weights (heavy, expensive)
 | **QLoRA** | Adapters + 4-bit base | 🟢🟢 Lowest | Adapter + compression |
 
 **One line:** Full fine-tuning updates the whole model (expensive); PEFT is the family that only updates a tiny part; LoRA is the popular PEFT method that adds small trainable "adapters" while freezing the original; QLoRA = LoRA but also compresses the model to 4-bit — so you can fine-tune big models on cheap/consumer hardware.
+
+## Q2: A deeper way to think about fine-tuning — reshaping the probability distribution
+
+**"Training the model on our data" is the *how*; the deeper truth is that fine-tuning reshapes the model's output *probability distribution*.**
+
+### Why this framing is better
+Under the hood, an LLM doesn't "know facts" — at every step it outputs a **probability distribution over the next token** (how likely each possible next word is).
+
+Before fine-tuning, given *"My order is late"*:
+```
+"Sorry"  → 15%
+"Not"    → 20%   ← "Not my problem" is fairly likely 😬
+"Please" → 10%
+```
+After fine-tuning on polite support replies:
+```
+"Sorry"  → 60%   ← now much more likely ✅
+"Not"    → 2%    ← pushed down
+"Please" → 15%
+```
+You didn't "add facts" — you **reshaped *which outputs are more/less likely*.** The model now *leans* toward your desired style/answers.
+
+### This explains things we've seen
+- **Fine-tuning changes *behavior/style*, not just knowledge** → it's nudging probabilities
+- **Why LoRA works**: the adapter's job is exactly to **shift the output distribution** (base + adapter → new probabilities), without editing the base
+- **Why over-fine-tuning can hurt** → reshape too far → the model forgets general behavior (catastrophic forgetting)
+
+### The layered truth
+| Level | Statement |
+|---|---|
+| Beginner | "Fine-tuning = training the model on our data" |
+| **Better** | "Fine-tuning reshapes the model's output probability distribution" |
+| Precise | "Fine-tuning shifts the next-token probabilities toward the patterns in our data — making our desired outputs more likely" |
+
+**One line:** "Training on our data" is the *how*, but what's really happening is that fine-tuning **reshapes the model's next-token probability distribution** — making your desired outputs more likely and others less likely. That's why it changes *behavior and style*, not just adds facts, and it's exactly what a LoRA adapter does (shifts the output distribution without editing the frozen base).
