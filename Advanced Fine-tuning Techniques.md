@@ -401,3 +401,39 @@ Your QLoRA LLaMA notebook could be rewritten with Unsloth to train **faster and 
 Unsloth is the **framework/engine** that lets you *run* methods like PPO/DPO/GRPO efficiently — the methods themselves come from the alignment world (often via `trl`); Unsloth makes them **fast and memory-light.**
 
 **One line:** Unsloth is an open-source library that makes fine-tuning LLMs ~2× faster and ~70% lighter on memory — so you can train models (LoRA/QLoRA, SFT, DPO, GRPO, etc.) on a single small/free GPU. It sits on top of Hugging Face's tools as a performance "tune-up," not a replacement.
+
+## Q10: Is it "first SFT, then PEFT" — and are PPO/DPO/GRPO a separate optimization used alongside fine-tuning?
+
+**Two mix-ups to fix — it's the recurring "type vs mechanism vs stage" confusion. Here's the definitive map.**
+
+### The 3 separate axes (don't mix them)
+
+**Axis 1 — STAGES (the order):**
+```
+SFT   →   Alignment
+(1st)     (2nd)
+```
+SFT = learn from (question → answer) examples · Alignment = learn from preferences (better vs worse)
+
+**Axis 2 — alignment METHODS (how you *do* stage 2):** **PPO, DPO, GRPO** — these **ARE** the alignment fine-tuning, not a decorator bolted on.
+
+**Axis 3 — MECHANISM (how *efficiently*, applies to ANY stage):** **Full fine-tuning** OR **PEFT (LoRA/QLoRA)**. PEFT is *not* a stage after SFT — it's the efficient *way* to run any stage.
+
+### Your two statements corrected
+- ❌ "first SFT, second PEFT" → ✅ **first SFT, second Alignment.** PEFT is *how* you run SFT or alignment cheaply, not the "second step."
+- ❌ "PPO/DPO/GRPO is optimization used *alongside* fine-tuning" → ✅ **PPO/DPO/GRPO *are* the alignment fine-tuning** (stage 2). But yes — they can be run *using* PEFT (e.g. DPO + LoRA) for efficiency.
+
+### The one clean picture
+```
+STAGES:      SFT ─────────────► Alignment
+             (what to say)       (what to prefer)
+                                     │
+METHODS for alignment:        PPO / DPO / GRPO   ← these DO the alignment
+                                     
+MECHANISM (any stage):   Full fine-tuning  OR  PEFT (LoRA/QLoRA)   ← how efficiently
+```
+
+### In a real sentence
+> "I did **SFT** (stage 1) using **QLoRA** (PEFT mechanism). Then I did **alignment** (stage 2) using **DPO** (method), also with **LoRA**."
+
+**One line:** The two *stages* are **SFT → Alignment** (not SFT → PEFT). **PPO/DPO/GRPO** aren't a separate optimization added on — they **are** the alignment stage. And **PEFT (LoRA/QLoRA)** isn't a stage — it's the *efficient how*, usable with SFT *or* alignment.
